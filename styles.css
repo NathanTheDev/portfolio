@@ -9,8 +9,8 @@ body {
 }
 
 .title {
-	position: fixed;
 	width: 100%;
+	position: fixed;
 }
 
 h1 {
@@ -57,4 +57,21 @@ h1 span {
 a {
 	text-decoration: none;
 	padding: 0;
+}
+
+@media (max-aspect-ratio: 3/4) {
+	h1 {
+		margin: 1rem;
+		font-size: 3.5rem;
+	}
+
+	.flex-container {
+		width: 80%;
+		height: 4rem;
+		margin: 0 10%;
+	}
+
+	.flex-button {
+		font-size: 1rem;
+	}
 }
