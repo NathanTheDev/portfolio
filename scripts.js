@@ -6,6 +6,16 @@ import { UnrealBloomPass } from "jsm/postprocessing/UnrealBloomPass.js";
 
 const scene = new THREE.Scene();
 
+// Create the loading manager
+const loadingManager = new THREE.LoadingManager();
+loadingManager.onStart = () => {
+  console.log("Just started");
+};
+loadingManager.onLoad = () => {
+  console.log("All assets loaded!");
+  animate();
+};
+
 const camera = new THREE.PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight,
@@ -42,7 +52,7 @@ const bloomPass = new UnrealBloomPass(
 );
 composer.addPass(bloomPass);
 
-const loader = new GLTFLoader();
+const loader = new GLTFLoader(loadingManager);
 let cube; // color: #7B7B7B
 loader.load(
   "assets/cube.glb",
@@ -62,34 +72,33 @@ loader.load(
 );
 
 let cube2; // Store the loaded model to manipulate it later
-setTimeout(() => {
-  loader.load(
-    "assets/cube2.glb",
-    (gltf) => {
-      cube2 = gltf.scene;
-      scene.add(cube2);
-      cube2.rotation.y = Math.PI / 4 - Math.PI / 2;
+loader.load(
+  "assets/cube2.glb",
+  (gltf) => {
+    cube2 = gltf.scene;
+    scene.add(cube2);
+    cube2.rotation.y = Math.PI / 4 - Math.PI / 2;
+    cube2.visible = false;
 
-      // Make sure the model casts shadows
-      cube2.traverse((child) => {
-        if (child.isMesh) {
-          // console.log(child.material.name);
-          child.castShadow = true;
-          if (child.material.name == "inner_mat") {
-            child.material.emissive = new THREE.Color(0xbf502f);
-            child.material.emissiveIntensity = 1; // Increase brightness
-          }
+    // Make sure the model casts shadows
+    cube2.traverse((child) => {
+      if (child.isMesh) {
+        // console.log(child.material.name);
+        child.castShadow = true;
+        if (child.material.name == "inner_mat") {
+          child.material.emissive = new THREE.Color(0xbf502f);
+          child.material.emissiveIntensity = 1; // Increase brightness
         }
-      });
-    },
-    undefined,
-    (error) => {
-      console.error("Error loading model:", error);
-    }
-  );
-}, 5900);
+      }
+    });
+  },
+  undefined,
+  (error) => {
+    console.error("Error loading model:", error);
+  }
+);
 
-const groundGeometry = new THREE.PlaneGeometry(1500, 1500); // Large plane
+const groundGeometry = new THREE.PlaneGeometry(900, 900); // Large plane
 const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x171717 }); // Light gray material
 const ground = new THREE.Mesh(groundGeometry, groundMaterial);
 ground.rotation.x = -Math.PI / 2; // Rotate to be flat on the ground
@@ -118,9 +127,13 @@ const finalCamRot = new THREE.Quaternion().setFromEuler(
   new THREE.Euler(-Math.PI / 4.75, 0, 0)
 );
 
-function animate() {
-  requestAnimationFrame(animate);
+const targetFPS = 24;
+const frameDuration = 1000 / targetFPS;
+let lastFrameTime = performance.now();
 
+function animate() {
+  const now = performance.now();
+  const deltaTime = now - lastFrameTime;
   let time = clock.getElapsedTime();
 
   if (cube && time < 3) {
@@ -131,6 +144,10 @@ function animate() {
     acceleration -= 0.0075;
     let easeFactor = acceleration * acceleration;
     cube.quaternion.slerpQuaternions(finalCubeRot, initCubeRot, easeFactor);
+  }
+
+  if (cube2 && time > 6) {
+    cube2.visible = true;
   }
 
   if (cube && time > 6 && cube.scale.x > 0) {
@@ -147,11 +164,9 @@ function animate() {
     camera.quaternion.slerpQuaternions(initCamRot, finalCamRot, lerpFactor);
   }
 
-  // renderer.render(scene, camera);
   composer.render(); // Use composer instead of renderer
+  requestAnimationFrame(animate);
 }
-
-animate();
 
 window.addEventListener("resize", () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
