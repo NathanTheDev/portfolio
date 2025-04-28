@@ -57,6 +57,11 @@ a {
 	padding: 0;
 }
 
+.cube-container {
+  max-width: 10%;
+  max-height: 10%;
+}
+
 @media (max-aspect-ratio: 3/4) {
 	h1 {
 		margin: 1rem;
