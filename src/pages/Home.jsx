@@ -21,6 +21,9 @@ const Home = () => {
         <a href="mailto:nathan-s-dev@outlook.com" className="flex-button">
           Contact Me
         </a>
+        <a href="blog" className="flex-button">
+          Blog
+        </a>
 		  </div>
 		</>
 	  );
