@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import Cube from "./Cube";
 
 const Home = () => {
@@ -21,9 +22,9 @@ const Home = () => {
         <a href="mailto:nathan-s-dev@outlook.com" className="flex-button">
           Contact Me
         </a>
-        <a href="blog" className="flex-button">
+        <Link to="/blog" className="flex-button">
           Blog
-        </a>
+        </Link>
 		  </div>
 		</>
 	  );

@@ -5,9 +5,9 @@ import Pages from './pages/Pages'
 function App() {
   return (
     <>
-      <BrowserRouter>
+      <HashRouter>
         <Pages />
-      </BrowserRouter>
+      </HashRouter>
     </>
   )
 }
