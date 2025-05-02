@@ -21,9 +21,9 @@ const Blog = () => {
       <button onClick={() => {navigate("/home");}}>
         Go to Home
       </button>
-      <div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {blogList.map((blog) => (
-          <BlogCard key={blog} title={blog} />
+          <BlogCard key={blog.text} title={blog.text} description={blog.description} />
         ))}
       </div>
     </div>
