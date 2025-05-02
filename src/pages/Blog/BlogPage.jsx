@@ -1,12 +1,27 @@
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom"
+import ReactMarkdown from "react-markdown";
 
 const BlogPage = () => {
   const { title } = useParams();
+  const [text, setText] = useState("");
+
+  useEffect(() => {
+    updateText();
+  }, []);
+
+  const updateText = () => {
+    fetch(`/portfolio/blogs/${title}/${title}.md`)
+      .then(res => res.text())
+      .then(text => setText(text));
+  };
 
   return (
     <div>
-      <h1>{title}</h1>
-    </div>
+      <ReactMarkdown>
+        {text}
+      </ReactMarkdown>
+      </div>
   );
 };
 
