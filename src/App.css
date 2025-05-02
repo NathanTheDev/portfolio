@@ -5,7 +5,6 @@
 
 body { 
     margin: 0; 
-    overflow: hidden; 
     color:#EEEEEE;
     background-color: #222831;
 }
@@ -60,6 +59,15 @@ a {
 .cube-container {
   max-width: 10%;
   max-height: 10%;
+}
+
+.blog-container {
+	overflow-y: auto;
+}
+
+.blog-container h1 {
+	text-align: left;
+	margin-bottom: 0;
 }
 
 @media (max-aspect-ratio: 3/4) {
