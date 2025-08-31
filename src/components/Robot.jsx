@@ -34,18 +34,21 @@ const GroundPlane = () => (
 const Robot = () => {
   return (
     <div className="w-screen h-screen">
-      <Canvas shadows camera={{ position: [0, 5, 10], fov: 50 }}>
+      <Canvas
+				shadows 
+				camera={{ position: [0, 5, 7], fov: 50, rotation: [0, 0, 0] }} 
+				onCreated={({ camera }) => camera.lookAt(0, 2.5, 0)}
+			>
         <ambientLight intensity={1} />
         <directionalLight
           position={[5, 10, 5]}
-          intensity={10}
+          intensity={50}
           castShadow
           shadow-mapSize-width={1024}
           shadow-mapSize-height={1024}
         />
         <RobotModel />
         <GroundPlane />
-        <OrbitControls />
       </Canvas>
     </div>
   );
