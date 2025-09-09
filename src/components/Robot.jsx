@@ -101,6 +101,7 @@ const Robot = () => {
   return (
     <div className="w-screen h-screen relative">
       <Canvas
+        style={{ background: "#F2F2F2" }}
         shadows
         camera={{ position: [0, 5, 7], fov: 50 }}
         onCreated={({ camera }) => {
