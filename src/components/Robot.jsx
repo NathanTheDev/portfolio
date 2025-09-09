@@ -2,18 +2,37 @@ import { useEffect, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useGLTF, Html } from "@react-three/drei";
 import robotPath from "@/assets/robot.glb";
+import basePath from "@/assets/base.glb";
 import aboutPath from "@/assets/about.glb";
 import Navigation from "./Navigation";
 import { AnimationMixer, LoopOnce, Vector3 } from "three";
+
+const cloneWithMaterials = (object) => {
+  const cloned = object.clone(true);
+  cloned.traverse((child) => {
+    if (child.isMesh) {
+      if (Array.isArray(child.material)) {
+        child.material = child.material.map((m) => {
+          const mat = m.clone();
+          if (m.map) mat.map = m.map.clone();
+          return mat;
+        });
+      } else {
+        const mat = child.material;
+        child.material = mat.clone();
+        if (mat.map) child.material.map = mat.map.clone();
+      }
+      child.castShadow = true;
+    }
+  });
+  return cloned;
+};
 
 const useCachedGLTF = (path) => {
   const cacheRef = useRef(null);
   if (!cacheRef.current) {
     const gltf = useGLTF(path);
-    const clonedScene = gltf.scene.clone(true);
-    clonedScene.traverse((child) => {
-      if (child.isMesh) child.castShadow = true;
-    });
+    const clonedScene = cloneWithMaterials(gltf.scene);
     clonedScene.position.set(0, 0, 0);
     cacheRef.current = {
       scene: clonedScene,
@@ -23,15 +42,43 @@ const useCachedGLTF = (path) => {
   return cacheRef.current;
 };
 
-const RobotModel = () => {
-  const { scene } = useCachedGLTF(robotPath);
-  const robotRef = useRef();
-  useFrame(({ clock }) => {
-    if (robotRef.current) {
-      robotRef.current.position.y = 1 + Math.sin(clock.elapsedTime) * 0.1;
+const AnimatedModel = ({ path, playOnce, onFinished, position = [0, 1, 0] }) => {
+  const { scene, animations } = useCachedGLTF(path);
+  const modelRef = useRef();
+  const mixer = useRef();
+
+  useEffect(() => {
+    if (modelRef.current) {
+      modelRef.current.rotation.y = Math.PI;
+      modelRef.current.position.set(...position);
     }
+    if (animations.length > 0) {
+      mixer.current = new AnimationMixer(scene);
+      animations.forEach((clip) => {
+        const action = mixer.current.clipAction(clip);
+        if (playOnce) {
+          action.setLoop(LoopOnce, 1);
+          action.clampWhenFinished = true;
+        }
+        action.play();
+        if (playOnce) {
+          mixer.current.addEventListener("finished", onFinished);
+        }
+      });
+    } else if (playOnce) {
+      onFinished?.();
+    }
+    return () => mixer.current?.stopAllAction();
+  }, [animations, scene]);
+
+  useFrame(({ clock }, delta) => {
+    if (!playOnce && modelRef.current) {
+      modelRef.current.position.y = position[1] + Math.sin(clock.elapsedTime) * 0.1;
+    }
+    mixer.current?.update(delta);
   });
-  return <primitive ref={robotRef} object={scene} />;
+
+  return <primitive ref={modelRef} object={scene} />;
 };
 
 const AboutModel = () => {
@@ -72,9 +119,7 @@ function interpolateCamera(camera, targetPos, targetLookAt, alpha = 0.05) {
 
 const CameraController = ({ cameraRef, targetPos, targetLookAt }) => {
   useFrame(() => {
-    if (cameraRef.current) {
-      interpolateCamera(cameraRef.current, targetPos, targetLookAt, 0.05);
-    }
+    if (cameraRef.current) interpolateCamera(cameraRef.current, targetPos, targetLookAt, 0.05);
   });
   return null;
 };
@@ -82,6 +127,7 @@ const CameraController = ({ cameraRef, targetPos, targetLookAt }) => {
 const Robot = () => {
   const cameraRef = useRef();
   const [viewAbout, setViewAbout] = useState(false);
+  const [robotPlayed, setRobotPlayed] = useState(false);
   const [targetPos, setTargetPos] = useState(new Vector3(0, 5, 7));
   const [targetLookAt, setTargetLookAt] = useState(new Vector3(0, 2.5, 0));
 
@@ -109,11 +155,7 @@ const Robot = () => {
           cameraRef.current = camera;
         }}
       >
-        <CameraController
-          cameraRef={cameraRef}
-          targetPos={targetPos}
-          targetLookAt={targetLookAt}
-        />
+        <CameraController cameraRef={cameraRef} targetPos={targetPos} targetLookAt={targetLookAt} />
         <ambientLight intensity={1} />
         <directionalLight
           position={[5, 10, 5]}
@@ -122,7 +164,15 @@ const Robot = () => {
           shadow-mapSize-width={1024}
           shadow-mapSize-height={1024}
         />
-        {!viewAbout && <RobotModel />}
+        {!viewAbout && !robotPlayed && (
+          <AnimatedModel
+            path={robotPath}
+            playOnce={true}
+            onFinished={() => setRobotPlayed(true)}
+            position={[0, 1, 0]}
+          />
+        )}
+        {!viewAbout && robotPlayed && <AnimatedModel path={basePath} position={[0, 1, 0]} />}
         {viewAbout && <AboutModel />}
         <GroundPlane />
         <Html position={[0, 0, 0]} />
